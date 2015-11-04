@@ -1,0 +1,312 @@
+<html>
+<head>
+    <title>d3 test</title>
+    <style>
+        body {
+            background-color: #EEEEEE;
+        }
+
+        .display, .control {
+            margin: 10px;
+        }
+
+        .display {
+            float: left;
+        }
+
+        .control {
+            float: left;
+        }
+
+        .control textarea {
+            margin: 10px;
+        }
+
+        svg {
+            border: 1px solid black;
+        }
+
+        .grass {
+            fill: #3CAB26;
+            stroke-width: 1px;
+            stroke: #2D801C;
+
+        }
+		.start {
+			fill: #ab13a5;
+			stroke-width: 1px;
+			stroke: #2D801C;
+
+		}
+		.des {
+			fill: #ab6d14;
+			stroke-width: 1px;
+			stroke: #2D801C;
+
+		}
+        .swamp {
+            fill: #1e1585;
+            stroke-width: 1px;
+            stroke: #C7C7C7;
+        }
+
+        .wall {
+            fill: #B3210B;
+            stroke-width: 1px;
+            stroke: #FF6600;
+        }
+
+        .position {
+            fill: #C9EBF0;
+            stroke-width: 3px;
+            stroke: #2973F2;
+        }
+
+        .positionNumber {
+            fill: #0E1A9E;
+            text-anchor: middle;
+        }
+
+        .path {
+            stroke-width: 3px;
+            stroke: #2973F2;
+        }
+    </style>
+</head>
+<body>
+<div class="display">
+</div>
+<div class = "route">
+
+</div>
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+<script src = "utils.js"></script>
+<script>
+    $(function() {
+        var squareLength = 40;
+        var ratios = {swamp: 0.1, wall: 0.1};
+        var gridSize = {x: 20, y: 15};
+
+        var svgSize = {
+            width: gridSize.x * squareLength,
+            height: gridSize.y * squareLength
+        }
+
+        function isBorder(x, y) {
+            return x == 0 || y == 0 || x == (gridSize.x - 1) || y == (gridSize.y - 1);
+        }
+
+        function drawMap() {
+            var start = 0;
+            var des = 0;
+            var type;
+            var count = 0;
+            var map = [];
+            var problem = {};
+            for (var i = 0; i < gridSize.x; i++) {
+                for (var j = 0; j < gridSize.y; j++) {
+                    count++;
+                    var cell = {};
+                    var startType = 0;
+                    var desType = 0;
+
+                    cell.x = i * squareLength;
+                    cell.y = j * squareLength;
+                    var swamp = Math.random() < ratios.swamp;
+                    var wall = Math.random() < ratios.wall;
+
+                    if (isBorder(i, j, gridSize)) {
+                        type = "wall";
+                    } else {
+                        type = "grass";
+                    }
+                    if (swamp) {
+                        type = "swamp";
+                    }
+                    if (wall) {
+                        type = "wall";
+                    }
+                    cell.type = type;
+                    if (start == 0) {
+                        startType = Math.random() < 0.02;
+                    }
+                    if (des == 0) {
+                        desType = Math.random() < 0.02;
+                    }
+                    if (startType) {
+                        cell.type = "start";
+                        start++;
+                        console.log(count);
+                    }
+                    if (desType) {
+                        cell.type = "des";
+                        des++;
+                    }
+                    if (cell.type == "wall") {
+                        cell.weight = 10000;
+                    } else if (cell.type == "swamp") {
+                        cell.weight = 5;
+                    } else if (cell.type == "grass") {
+                        cell.weight = 1;
+                    } else {
+                        cell.weight = 1;
+                    }
+                    map.push(cell);
+                    if (cell.type == "start") {
+                        problem.start = cell;
+                    }
+                    if (cell.type == "des") {
+                        problem.des = cell;
+                    }
+
+                }
+            }
+            problem.map = map;
+
+            return problem;
+        }
+
+
+        var problem = drawMap();
+
+        var svg = d3.select("body")
+                .append("svg")
+                .attr("width", svgSize.width)
+                .attr("height", svgSize.height);
+
+        var rect = svg.selectAll("rect")
+                .data(problem.map)
+                .enter()
+                .append("rect")
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("width", function (d) {
+                    return squareLength;
+                })
+                .attr("height", function (d) {
+                    return squareLength;
+                })
+                .attr("class", function (d) {
+                    return d.type;
+                })
+                .attr("id", function (d) {
+                    return d.x + "_" + d.y;
+                });
+
+        //aStar(problem);
+        function aStar(problem) {
+            var queue = new PriorityQueue();
+
+            var start = problem.start;
+            var des = problem.des;
+            queue.push((start, []), getHeuristic(start, des));
+            var visited = [start];
+
+        }
+
+        function bfs_search() {
+            var start = problem.start;
+            var queue = new Queue();
+            var visited = [start];
+            var des = problem.des;
+            queue.enQueue(start);
+            while (!queue.isEmpty()) {
+                var current = queue.deQueue();
+                var nei = getNei(current);
+                if (isGoalState(current)) {
+                    console.log(visited);
+                    return visited;
+                }
+                for(var i = 0; i < nei.length; i++){
+                    var element = nei[i];
+                    if (visited.indexOf(element) == -1) {
+                        visited.push(element);
+                        queue.enQueue(element);
+                    }
+                }
+            }
+        };
+        var visited = bfs_search();
+        visited.forEach(function (ele) {
+            var x = 10000;
+            setTimeout(changeColor("#" + ele.x + "_" + ele.y), x);
+            x += 500;
+        });
+
+        var text = svg.selectAll("text")
+                .data(visited)
+                .enter()
+                .append("text");
+
+        var textLabels = text
+                .attr("x", function (d) {
+                    return d.x;
+                })
+                .attr("y", function (d) {
+                    return d.y + 15;
+                })
+                .text(function (d) {
+                    if (d.type == "start" || d.type == "des") {
+                        return d.type;
+                    } else {
+                        return d.x;
+                    }
+                });
+
+        function changeColor(id) {
+            $(id).css("fill", "#cccccc");
+        }
+
+        function getNei(node) {
+            var nei = [];
+            var newNode;
+            var x = node.x;
+            var y = node.y;
+
+            if (!(node.x == 0)) {
+                if (getNode(problem, node.x - 40, node.y).type != "wall") {
+                    nei.push(getNode(problem, node.x - 40, node.y));
+                }
+            }
+            if (!(node.y == 0)) {
+                if (getNode(problem, node.x, node.y - 40).type != "wall") {
+                    nei.push(getNode(problem, node.x, node.y - 40));
+                }
+            }
+            if (!(node.x == 760 )) {
+                if (getNode(problem, node.x + 40, node.y).type != "wall") {
+                    nei.push(getNode(problem, node.x + 40, node.y));
+                }
+            }
+            if (!(node.y == 560)) {
+                if (getNode(problem, node.x, node.y + 40).type != "wall") {
+                    nei.push(getNode(problem, node.x, node.y + 40));
+                }
+            }
+            return nei;
+        };
+
+        function getNode(problem, x, y) {
+            return problem.map[x / 40 * 15 + y / 40];
+        };
+
+        function isGoalState(vertex) {
+            if (vertex.type == "des") {
+                return true;
+            } else {
+                return false;
+            }
+        }
+
+    });
+
+
+
+</script>
+</body>
+</html>
