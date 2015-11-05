@@ -1,0 +1,27 @@
+{
+  "name": "Dong",
+  "version": "0.0.1",
+  "authors": [
+    "Huyin"
+  ],
+  "description": "www.donghuyin.com",
+  "keywords": [
+    "blog"
+  ],
+  "license": "MIT",
+  "dependencies":{
+    "bootstrap":"3.3.5",
+    "angular":"~1.4.5",
+    "angular-animate":"~1.4.5",
+    "angular-ui-router":"~0.2.15",
+    "angular-resource":"~1.2",
+    "bootstrap-hover-dropdown":"~2.0.1",
+    "lumx":"0.3.79",
+    "angular-material":"0.10.1",
+    "angular-md5":"0.1.8",
+    "angular-ui-grid":"3.0.5",
+    "angular-ckeditor" : "~1.0.0",
+    "highlightjs":"8.7.0",
+    "font-awesome-animation":"0.0.7"
+  }
+}

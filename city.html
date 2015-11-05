@@ -79,6 +79,9 @@
 <div class = "route">
 
 </div>
+<div class = "buttons">
+    <button onclick="routingByBFS()">BFS</button>
+</div>
 <script src="http://d3js.org/d3.v3.min.js"></script>
 <script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
 <script src = "utils.js"></script>
@@ -101,12 +104,11 @@
             var start = 0;
             var des = 0;
             var type;
-            var count = 0;
+            var pre = "";
             var map = [];
             var problem = {};
             for (var i = 0; i < gridSize.x; i++) {
                 for (var j = 0; j < gridSize.y; j++) {
-                    count++;
                     var cell = {};
                     var startType = 0;
                     var desType = 0;
@@ -137,7 +139,7 @@
                     if (startType) {
                         cell.type = "start";
                         start++;
-                        console.log(count);
+
                     }
                     if (desType) {
                         cell.type = "des";
@@ -152,6 +154,7 @@
                     } else {
                         cell.weight = 1;
                     }
+                    cell.action = null;
                     map.push(cell);
                     if (cell.type == "start") {
                         problem.start = cell;
@@ -159,7 +162,6 @@
                     if (cell.type == "des") {
                         problem.des = cell;
                     }
-
                 }
             }
             problem.map = map;
@@ -212,80 +214,117 @@
         function bfs_search() {
             var start = problem.start;
             var queue = new Queue();
+            var action = [];
             var visited = [start];
             var des = problem.des;
             queue.enQueue(start);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
-                var nei = getNei(current);
+                var nei = getNei(current,visited);
                 if (isGoalState(current)) {
-                    console.log(visited);
+                    visited.push(current);
                     return visited;
                 }
                 for(var i = 0; i < nei.length; i++){
                     var element = nei[i];
-                    if (visited.indexOf(element) == -1) {
                         visited.push(element);
                         queue.enQueue(element);
-                    }
                 }
             }
         };
-        var visited = bfs_search();
-        visited.forEach(function (ele) {
-            var x = 10000;
-            setTimeout(changeColor("#" + ele.x + "_" + ele.y), x);
-            x += 500;
-        });
-
-        var text = svg.selectAll("text")
-                .data(visited)
-                .enter()
-                .append("text");
-
-        var textLabels = text
-                .attr("x", function (d) {
-                    return d.x;
-                })
-                .attr("y", function (d) {
-                    return d.y + 15;
-                })
-                .text(function (d) {
-                    if (d.type == "start" || d.type == "des") {
-                        return d.type;
-                    } else {
-                        return d.x;
-                    }
-                });
-
         function changeColor(id) {
             $(id).css("fill", "#cccccc");
         }
+        routingByBFS();
+        function routingByBFS() {
+            var visited = bfs_search();
+            for (var i = 0; i < visited.length; i++) {
+                changeColor("#" + visited[i].x + "_" + visited[i].y);
+            }
+            var des = visited[visited.length - 1];
+            var path = [des];
+            var temp = des;
+            var node;
+            while (temp.action != null) {
+                switch (temp.action) {
+                    case "right":
+                        node = getNextPath(visited, temp.x - 40, temp.y);
+                        break;
+                    case "left":
+                        node = getNextPath(visited, temp.x + 40, temp.y);
+                        break;
+                    case "up":
+                        node = getNextPath(visited, temp.x, temp.y + 40);
+                        break;
+                    case "down":
+                        node = getNextPath(visited, temp.x, temp.y - 40);
+                        break;
+                }
+                path.push(node);
+                temp = node;
+            }
+            console.log(path);
+            var text = svg.selectAll("text")
+                    .data(path)
+                    .enter()
+                    .append("text");
 
-        function getNei(node) {
+            var textLabels = text
+                    .attr("x", function (d) {
+                        return d.x;
+                    })
+                    .attr("y", function (d) {
+                        return d.y + 15;
+                    })
+                    .text(function (d) {
+                        if (d.type == "start" || d.type == "des") {
+                            return d.type;
+                        } else {
+                            return d.x + "," + d.y;
+                        }
+                    });
+        }
+        function getNextPath(visited,x,y){
+            console.log(x,y);
+            for(var i = 0; i < visited.length;i++){
+                if(x == visited[i].x && y ==  visited[i].y){
+                    return visited[i];
+                }
+            }
+        }
+
+
+
+
+        function getNei(node,visited) {
             var nei = [];
             var newNode;
-            var x = node.x;
-            var y = node.y;
-
             if (!(node.x == 0)) {
-                if (getNode(problem, node.x - 40, node.y).type != "wall") {
-                    nei.push(getNode(problem, node.x - 40, node.y));
+                newNode = getNode(problem, node.x - 40, node.y);
+                if (newNode.type != "wall" && visited.indexOf(newNode) == -1) {
+                    newNode.action = "left";
+                    nei.push(newNode);
                 }
             }
             if (!(node.y == 0)) {
-                if (getNode(problem, node.x, node.y - 40).type != "wall") {
-                    nei.push(getNode(problem, node.x, node.y - 40));
+                newNode = getNode(problem, node.x, node.y - 40);
+                if (newNode.type != "wall" && visited.indexOf(newNode) == -1) {
+                    newNode.action = "up";
+                    nei.push(newNode);
                 }
             }
             if (!(node.x == 760 )) {
-                if (getNode(problem, node.x + 40, node.y).type != "wall") {
-                    nei.push(getNode(problem, node.x + 40, node.y));
+                newNode = getNode(problem, node.x + 40, node.y);
+                if (newNode.type != "wall" && visited.indexOf(newNode) == -1) {
+                    newNode.action = "right";
+                    nei.push(newNode);
                 }
             }
             if (!(node.y == 560)) {
-                if (getNode(problem, node.x, node.y + 40).type != "wall") {
-                    nei.push(getNode(problem, node.x, node.y + 40));
+                newNode = getNode(problem, node.x, node.y + 40);
+                if (newNode.type != "wall" && visited.indexOf(newNode) == -1) {
+                    newNode.action = "down";
+                    nei.push(newNode);
                 }
             }
             return nei;
@@ -301,7 +340,7 @@
             } else {
                 return false;
             }
-        }
+        };
 
     });
 
