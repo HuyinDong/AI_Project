@@ -1,6 +1,7 @@
 <html>
 <head>
     <title>d3 test</title>
+    <link rel="stylesheet" href="./public/lib/angular-material/angular-material.css">
     <style>
         body {
             background-color: #EEEEEE;
@@ -71,22 +72,45 @@
             stroke-width: 3px;
             stroke: #2973F2;
         }
+
     </style>
+
 </head>
-<body>
+<body ng-app = "MyApp" ng-controller="myCtrl">
+<div layout = "row">
 <div class="display">
 </div>
-<div class = "route">
-
-</div>
-<div class = "buttons">
-    <button onclick="routingByBFS()">BFS</button>
-</div>
-<script src="http://d3js.org/d3.v3.min.js"></script>
-<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
+    <div layout = "row">
+        <form name="grid">
+        <md-input-container>
+            Select the algorithm to implement the search:
+            <md-radio-group flex ng-model="alg">
+                <div layout="column">
+                    <md-radio-button value="BFS" flex='100'> BFS
+                    </md-radio-button>
+                    <md-radio-button value="DFS" flex='100'> DFS
+                    </md-radio-button>
+                    <md-radio-button value="ASTAR" flex='100'> A*
+                    </md-radio-button>
+                </div>
+            </md-radio-group>
+        </md-input-container>
+            <hr>
+            <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
+            </form>
+    </div>
+    </div>
+<script src="./public/lib/d3/d3.min.js"></script>
+<script src="./public/lib/jquery/dist/jquery.min.js"></script>
+<script src="./public/lib/angular/angular.min.js"></script>
+<script src="./public/lib/angular-animate/angular-animate.min.js"></script>
+<script src="./public/lib/angular-aria/angular-aria.min.js"></script>
+<script src="./public/lib/angular-material/angular-material.min.js"></script>
 <script src = "utils.js"></script>
 <script>
-    $(function() {
+    var searchMap = angular.module('MyApp',['ngMaterial']);
+    searchMap.controller('myCtrl', function($scope,$interval){
+
         var squareLength = 40;
         var ratios = {swamp: 0.1, wall: 0.1};
         var gridSize = {x: 20, y: 15};
@@ -94,11 +118,70 @@
         var svgSize = {
             width: gridSize.x * squareLength,
             height: gridSize.y * squareLength
-        }
+        };
+
+
+
+        var svg = d3.select(".display")
+                .append("svg")
+                .attr("width", svgSize.width)
+                .attr("height", svgSize.height);
+        var problem = drawMap();
+        var rect = svg.selectAll("rect")
+                .data(problem.map)
+                .enter()
+                .append("rect");
+
+                rect.attr("x", function (d) {
+                            return d.x;
+                        })
+                        .attr("y", function (d) {
+                            return d.y;
+                        })
+                        .attr("width", function (d) {
+                            return squareLength;
+                        })
+                        .attr("height", function (d) {
+                            return squareLength;
+                        })
+                        .attr("class", function (d) {
+                            return d.type;
+                        })
+                        .attr("id", function (d) {
+                            return d.x + "_" + d.y;
+                        });
+
+        console.log(problem);
+        var startDes = [problem.start,problem.des];
+            var text = svg.selectAll("text")
+                    .data(startDes)
+                    .enter()
+                    .append("text");
+            text.attr("x", function (d) {
+                return d.x;
+            })
+                    .attr("y", function (d) {
+                        return d.y + 20;
+                    })
+                    .text(function (d) {
+                        return d.type;
+                    });
+        $scope.alg = "";
+        $scope.submit = function(){
+            if($scope.alg == "BFS"){
+                routingByBfS();
+            }else if($scope.alg == "DFS"){
+
+            }else if($scope.alg == "ASTAR"){
+
+            }else{
+
+            }
+        };
 
         function isBorder(x, y) {
             return x == 0 || y == 0 || x == (gridSize.x - 1) || y == (gridSize.y - 1);
-        }
+        };
 
         function drawMap() {
             var start = 0;
@@ -112,7 +195,6 @@
                     var cell = {};
                     var startType = 0;
                     var desType = 0;
-
                     cell.x = i * squareLength;
                     cell.y = j * squareLength;
                     var swamp = Math.random() < ratios.swamp;
@@ -139,7 +221,6 @@
                     if (startType) {
                         cell.type = "start";
                         start++;
-
                     }
                     if (desType) {
                         cell.type = "des";
@@ -165,40 +246,8 @@
                 }
             }
             problem.map = map;
-
             return problem;
         }
-
-
-        var problem = drawMap();
-
-        var svg = d3.select("body")
-                .append("svg")
-                .attr("width", svgSize.width)
-                .attr("height", svgSize.height);
-
-        var rect = svg.selectAll("rect")
-                .data(problem.map)
-                .enter()
-                .append("rect")
-                .attr("x", function (d) {
-                    return d.x;
-                })
-                .attr("y", function (d) {
-                    return d.y;
-                })
-                .attr("width", function (d) {
-                    return squareLength;
-                })
-                .attr("height", function (d) {
-                    return squareLength;
-                })
-                .attr("class", function (d) {
-                    return d.type;
-                })
-                .attr("id", function (d) {
-                    return d.x + "_" + d.y;
-                });
 
         //aStar(problem);
         function aStar(problem) {
@@ -209,14 +258,12 @@
             queue.push((start, []), getHeuristic(start, des));
             var visited = [start];
 
-        }
+        };
 
         function bfs_search() {
             var start = problem.start;
             var queue = new Queue();
-            var action = [];
             var visited = [start];
-            var des = problem.des;
             queue.enQueue(start);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
@@ -227,25 +274,86 @@
                 }
                 for(var i = 0; i < nei.length; i++){
                     var element = nei[i];
-                        visited.push(element);
-                        queue.enQueue(element);
+                    visited.push(element);
+                    queue.enQueue(element);
                 }
             }
         };
-        function changeColor(id) {
-            $(id).css("fill", "#cccccc");
+        function drawPath(path,polyline){
+            var lineFunction = d3.svg.line()
+                    .x(function(d){
+                        return d.x;
+                    })
+                    .y(function(d){
+                        return d.y;
+                    })
+                    .interpolate("linear");
+            var lineGraph = svg.append("path")
+                    .attr("d",lineFunction(polyline))
+                    .attr("stroke", "red")
+                    .attr("stroke-width", 2)
+                    .attr("fill","none");
+           /* var textPath = svg.selectAll("line")
+                    .data(path)
+                    .enter()
+                    .append("line");
+            textPath.attr("x1", function (d) {
+                if(d.action == "right" || d.action == "left"){
+                    return d.x;
+                }else{
+                    return d.x+20;
+                }
+                    })
+                    .attr("y1", function (d) {
+                        if(d.action == "right" || d.action == "left"){
+                            return d.y+20;
+                        }else {
+                            return d.y;
+                        }
+                    })
+                    .attr("x2", function(d){
+                        if(d.action == "right" || d.action == "left"){
+                            return d.x+40;
+                        }else{
+                            return d.x+20;
+                        }
+                    })
+                    .attr("y2", function(d){
+                        if(d.action == "right" || d.action == "left"){
+                            return d.y+20;
+                        }else {
+                            return d.y+40;
+                        }
+                    })
+                    .attr("stroke-width",2)
+                    .attr("stroke", "red");*/
+
+
         }
-        routingByBFS();
-        function routingByBFS() {
+        function changeColor(visited,path,polyline) {
+                var cb = $interval(function () {
+                    if (visited.length == 1) {
+                        drawPath(path,polyline);
+                        $interval.cancel(cb);
+                    }
+                    var node = visited.reverse().pop();
+                    $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
+                }, 10);
+        };
+
+         function routingByBfS() {
             var visited = bfs_search();
-            for (var i = 0; i < visited.length; i++) {
-                changeColor("#" + visited[i].x + "_" + visited[i].y);
-            }
+            var tempVisited = visited;
             var des = visited[visited.length - 1];
-            var path = [des];
+            var path = [];
             var temp = des;
             var node;
+            var polyline = [{
+                            "x" : temp.x+20,
+                            "y" : temp.y + 20
+                            }];
             while (temp.action != null) {
+                console.log(temp);
                 switch (temp.action) {
                     case "right":
                         node = getNextPath(visited, temp.x - 40, temp.y);
@@ -260,38 +368,40 @@
                         node = getNextPath(visited, temp.x, temp.y - 40);
                         break;
                 }
-                path.push(node);
+                /*if(path.length != 0) {
+                    var last = path[path.length - 1];
+                    if (node.action != last.action) {
+                        if(last.action == "right"){
+                            polyline.concat((last.x+40)+","+(last.y+20)+" ");
+                            polyline.concat((last.x+20)+","+(last.y+20)+" ");
+                        }
+                          polyline.concat(last.x)
+                    }
+                }*/
+
+                polyline.push({
+                   "x" : node.x+20,
+                    "y" : node.y+20
+                });
+                if(node.action != null) {
+                    path.push(node);
+                }
+
                 temp = node;
             }
-            console.log(path);
-            var text = svg.selectAll("text")
-                    .data(path)
-                    .enter()
-                    .append("text");
 
-            var textLabels = text
-                    .attr("x", function (d) {
-                        return d.x;
-                    })
-                    .attr("y", function (d) {
-                        return d.y + 15;
-                    })
-                    .text(function (d) {
-                        if (d.type == "start" || d.type == "des") {
-                            return d.type;
-                        } else {
-                            return d.x + "," + d.y;
-                        }
-                    });
-        }
+             var rev = path.reverse();
+             console.log(polyline);
+             console.log(rev);
+            changeColor(tempVisited,rev,polyline);
+        };
         function getNextPath(visited,x,y){
-            console.log(x,y);
             for(var i = 0; i < visited.length;i++){
                 if(x == visited[i].x && y ==  visited[i].y){
                     return visited[i];
                 }
             }
-        }
+        };
 
 
 
@@ -343,8 +453,6 @@
         };
 
     });
-
-
 
 </script>
 </body>
