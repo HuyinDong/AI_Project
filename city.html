@@ -2,85 +2,16 @@
 <head>
     <title>d3 test</title>
     <link rel="stylesheet" href="./public/lib/angular-material/angular-material.css">
-    <style>
-        body {
-            background-color: #EEEEEE;
-        }
-
-        .display, .control {
-            margin: 10px;
-        }
-
-        .display {
-            float: left;
-        }
-
-        .control {
-            float: left;
-        }
-
-        .control textarea {
-            margin: 10px;
-        }
-
-        svg {
-            border: 1px solid black;
-        }
-
-        .grass {
-            fill: #3CAB26;
-            stroke-width: 1px;
-            stroke: #2D801C;
-
-        }
-		.start {
-			fill: #ab13a5;
-			stroke-width: 1px;
-			stroke: #2D801C;
-
-		}
-		.des {
-			fill: #ab6d14;
-			stroke-width: 1px;
-			stroke: #2D801C;
-
-		}
-        .swamp {
-            fill: #1e1585;
-            stroke-width: 1px;
-            stroke: #C7C7C7;
-        }
-
-        .wall {
-            fill: #B3210B;
-            stroke-width: 1px;
-            stroke: #FF6600;
-        }
-
-        .position {
-            fill: #C9EBF0;
-            stroke-width: 3px;
-            stroke: #2973F2;
-        }
-
-        .positionNumber {
-            fill: #0E1A9E;
-            text-anchor: middle;
-        }
-
-        .path {
-            stroke-width: 3px;
-            stroke: #2973F2;
-        }
-
-    </style>
+    <link rel="stylesheet" href="microphone/microphone.min.css">
+    <link rel="stylesheet" href="style.css">
 
 </head>
 <body ng-app = "MyApp" ng-controller="myCtrl">
 <div layout = "row">
 <div class="display">
 </div>
-    <div layout = "row">
+    <div layout = "column">
+        <div>
         <form name="grid">
         <md-input-container>
             Select the algorithm to implement the search:
@@ -98,6 +29,14 @@
             <hr>
             <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
             </form>
+        </div>
+        <div style="algin:center">
+            <div id="microphone"></div>
+            <pre id="result"></pre>
+            <div id="info"></div>
+            <div id="error"></div>
+
+        </div>
     </div>
     </div>
 <script src="./public/lib/d3/d3.min.js"></script>
@@ -107,6 +46,8 @@
 <script src="./public/lib/angular-aria/angular-aria.min.js"></script>
 <script src="./public/lib/angular-material/angular-material.min.js"></script>
 <script src = "utils.js"></script>
+<script src="microphone/microphone.min.js"></script>
+<script src = "intent.js"></script>
 <script>
     var searchMap = angular.module('MyApp',['ngMaterial']);
     searchMap.controller('myCtrl', function($scope,$interval){
@@ -288,62 +229,31 @@
                         return d.y;
                     })
                     .interpolate("linear");
-            var lineGraph = svg.append("path")
+             svg.append("path")
                     .attr("d",lineFunction(polyline))
                     .attr("stroke", "red")
                     .attr("stroke-width", 2)
                     .attr("fill","none");
-           /* var textPath = svg.selectAll("line")
-                    .data(path)
-                    .enter()
-                    .append("line");
-            textPath.attr("x1", function (d) {
-                if(d.action == "right" || d.action == "left"){
-                    return d.x;
-                }else{
-                    return d.x+20;
-                }
-                    })
-                    .attr("y1", function (d) {
-                        if(d.action == "right" || d.action == "left"){
-                            return d.y+20;
-                        }else {
-                            return d.y;
-                        }
-                    })
-                    .attr("x2", function(d){
-                        if(d.action == "right" || d.action == "left"){
-                            return d.x+40;
-                        }else{
-                            return d.x+20;
-                        }
-                    })
-                    .attr("y2", function(d){
-                        if(d.action == "right" || d.action == "left"){
-                            return d.y+20;
-                        }else {
-                            return d.y+40;
-                        }
-                    })
-                    .attr("stroke-width",2)
-                    .attr("stroke", "red");*/
-
-
         }
         function changeColor(visited,path,polyline) {
+            var rev = visited.reverse();
                 var cb = $interval(function () {
                     if (visited.length == 1) {
                         drawPath(path,polyline);
                         $interval.cancel(cb);
                     }
-                    var node = visited.reverse().pop();
+                    var node = rev.pop();
                     $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
                 }, 10);
         };
 
          function routingByBfS() {
             var visited = bfs_search();
+
             var tempVisited = visited;
+             tempVisited.forEach(function(ele){
+                console.log(ele);
+             });
             var des = visited[visited.length - 1];
             var path = [];
             var temp = des;
@@ -353,7 +263,6 @@
                             "y" : temp.y + 20
                             }];
             while (temp.action != null) {
-                console.log(temp);
                 switch (temp.action) {
                     case "right":
                         node = getNextPath(visited, temp.x - 40, temp.y);
@@ -368,17 +277,6 @@
                         node = getNextPath(visited, temp.x, temp.y - 40);
                         break;
                 }
-                /*if(path.length != 0) {
-                    var last = path[path.length - 1];
-                    if (node.action != last.action) {
-                        if(last.action == "right"){
-                            polyline.concat((last.x+40)+","+(last.y+20)+" ");
-                            polyline.concat((last.x+20)+","+(last.y+20)+" ");
-                        }
-                          polyline.concat(last.x)
-                    }
-                }*/
-
                 polyline.push({
                    "x" : node.x+20,
                     "y" : node.y+20
@@ -386,13 +284,9 @@
                 if(node.action != null) {
                     path.push(node);
                 }
-
                 temp = node;
             }
-
              var rev = path.reverse();
-             console.log(polyline);
-             console.log(rev);
             changeColor(tempVisited,rev,polyline);
         };
         function getNextPath(visited,x,y){
