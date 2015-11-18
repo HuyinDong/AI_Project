@@ -120,6 +120,7 @@
 
             }
             routing(visited);
+            console.log(visited);
         };
 
         function isBorder(x, y) {
@@ -202,11 +203,29 @@
             queue.enQueue(start);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
-                console.log(current);
-            var weight = getHeuristic(problem,current,des);
-                console.log(weight);
-            if(weight > 0 && weight < 10000){
-                console.log("heuristic visited",visited);
+                console.log("current",current);
+            var weight = getTotalWeight(problem,current,des);
+                var min = weight.sort()[1];
+
+            if(min < 10000){
+                console.log("min",min);
+                current.total = min;
+               var pq = new PriorityQueue();
+                pq.enQueue(current);
+              /*  while(!pq.isEmpty()){
+                    current = pq.deQueue();
+                    if(isGoalState(current)){
+                        return visited;
+                    }
+                    visited.push(current);
+                    var nei = getNei(current,visited);
+                    for(var i = 0; i < nei.length; i++){
+                        var element = nei[i];
+                        visited.push(element);
+                        queue.enQueue(element);
+                    }
+                }
+                    */
                 return visited;
             }else{
                 console.log("run");
@@ -223,13 +242,12 @@
                     queue.enQueue(element);
                 }
             }
-console.log(visited);
             }
         }
 
         function getHeuristic(problem,begin,des){
-            var side = checkWeight(problem,begin,des);
-            console.log(side);
+          //  var side = checkWeight(problem,begin,des);
+            //console.log(side);
             var start;
             var end;
             if (begin.y > des.y) {
@@ -243,196 +261,91 @@ console.log(visited);
             console.log(weight);
             return weight;
         }
-        function getTotalWeight(problem,upsideNode,downsideNode,side){
-            var count = (Math.abs(upsideNode.x - downsideNode.x) + Math.abs(upsideNode.y - downsideNode.y)) / 40;
+       // var test = getTotalWeight(problem,problem.start,problem.des);
+       // console.log(test);
+        function getTotalWeight(problem,node1,node2){
+            var count = (Math.abs(node1.x - node2.x) + Math.abs(node1.y - node2.y)) / 40;
+            count--;
             var sum = 0;
-            var currentX = upsideNode.x;
-            var currentY = upsideNode.y;
+            var k = 1;
             var node;
-            var k = 0;
-            for(var i = 0; i<count ; i ++) {
-                if (side == "rightDown") {
-                    if (currentX < downsideNode.x) {
-                        currentX = upsideNode.x + 40 * i;
-                        node = getNode(problem, currentX, upsideNode.y);
-                    }else{
-                        currentY = upsideNode.y + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "downRight") {
-                    if (currentY < downsideNode.y) {
-                        currentY = upsideNode.y + 40 * i;
-                        node = getNode(problem, upsideNode.x, currentY);
-
-                    }else{
-                        currentX = downsideNode.x + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "leftDown") {
-                    if (currentX < downsideNode.x) {
-                        currentX = upsideNode.x - 40 * i;
-                        node = getNode(problem, currentX, upsideNode.y);
-                    }else{
-                        currentY = upsideNode.y + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "downLeft") {
-                    if (currentY < downsideNode.y) {
-                        currentY = upsideNode.y + 40 * i;
-                        node = getNode(problem, upsideNode.x, currentY);
-                    }else{
-                        currentX = downsideNode.x - 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else {
-
-                }
-            }
-            return sum;
-        }
-
-
-        function checkWeight(problem,begin,des) {
-            var side ;
             var start;
             var end;
-            if (begin.y > des.y) {
-                start = des;
-                end = begin;
+            var result = [];
+            if (node1.y > node2.y) {
+                start = node2;
+                end = node1;
             } else {
-                start = begin;
-                end = des;
+                start = node1;
+                end = node2;
             }
-
-            var count = (Math.abs(des.x - begin.x) + Math.abs(des.y - begin.y)) / 40;
-            var x = 0;
-            var y = 0;
-            if (start.x < end.x) {
-                var rightSide = true;
-                var currentX = start.x;
-                var currentY = start.y;
-                var node = start;
+            var currentX  = start.x;
+            var currentY  = start.y;
+            if(start.x < end.x){
+                for(var i = 0; i < count; i ++) {
+                    if(currentX < end.x){
+                        currentX = start.x + 40 * (i+1);
+                        node = getNode(problem, currentX, start.y);
+                    }
+                    else {
+                        currentY = start.y + 40 * k;
+                        node = getNode(problem, end.x, currentY);
+                        k++;
+                    }
+                    sum += node.weight;
+                }
+                result.push(sum);
+                var sum = 0;
                 var k = 1;
-                if (rightSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentX < end.x) {
-                            currentX = start.x + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                rightSide = false;
-                                break;
-                            }
-                        } else {
-                            currentY = node.y + 40 * k;
-                            node = getNode(problem, currentX, currentY);
-                            if (node.type == "wall") {
-                                rightSide = false;
-                                break;
-                            }
-                            k++;
-                        }
+                var currentX  = start.x;
+                var currentY  = start.y;
+                for(var i = 0; i <count; i ++) {
+                    if (currentY < end.y) {
+                        currentY = start.y + 40 * (i+1);
+                        node = getNode(problem, start.x, currentY);
+                    }else{
+                        currentX = start.x + 40 * k;
+                        node = getNode(problem, currentX, end.y);
+                        k++;
                     }
-                    if(rightSide){
-                        side = "rightDown";
-                    }
+                    sum+= node.weight;
                 }
-                currentX = start.x;
-                currentY = start.y;
-                node = start;
-                k = 1;
-                if (!rightSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentY < end.y) {
-                            currentY = start.y + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                rightSide = true;
-                                return null;
-                            }
-                        } else {
-                            currentX = node.x + 40 * k;
-                            node = getNode(problem, currentX, end.y);
-                            if (node.type == "wall") {
-                                rightSide = true;
-                                return null;
-                            }
-                            k++;
-                        }
-                    }
-                    if(!rightSide){
-                        side = "downRight";
-                    }
-                }
-            } else {
+                result.push(sum);
+                return result;
+                }else {
+                for(var i = 0; i < count; i ++) {
+                    if (currentX > end.x) {
+                        currentX = start.x - 40 * (i+1);
+                        node = getNode(problem, currentX, start.y);
+                    } else {
 
-                var leftSide = true;
-                var currentX = start.x;
-                var currentY = start.y;
-                var node = start;
+                        currentY = start.y + 40 * k;
+                        node = getNode(problem, end.x, currentY);
+                        k++;
+                    }
+                    sum += node.weight;
+                }
+                result.push(sum);
+                var sum = 0;
                 var k = 1;
-                if (leftSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentX > end.x) {
-                            currentX = start.x - 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                leftSide = false;
-                                break;
-                            }
-                        } else {
-                            currentY = node.y + 40 ;
-                            node = getNode(problem, currentX, currentY);
-                            if (node.type == "wall") {
-                                leftSide = false;
-                                break;
-                            }
-                            k++;
-                        }
-                    }
-                    if(leftSide){
-                        side = "leftDown";
-                    }
-                }
-                currentX = start.x;
-                currentY = start.y;
-                node = start;
-                k = 1;
-                if (!leftSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentY < end.y) {
-                            currentY = start.y + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                leftSide = true;
-                                return null;
-                            }
-                        } else {
-                            currentX = node.x - 40;
-                            node = getNode(problem, currentX, end.y);
-                            if (node.type == "wall") {
-                                leftSide = true;
-                                return null;
-                            }
-                            k++;
-                        }
-                    }
-                    if(!leftSide){
-                        side = "downLeft";
-                    }
-                }
+                var currentX  = start.x;
+                var currentY  = start.y;
+                for( var i = 0; i < count; i ++) {
+                    if (currentY < end.y) {
+                        currentY = start.y + 40 * (i+1);
+                        node = getNode(problem, start.x, currentY);
+                    }else{
 
+                        currentX = start.x - 40 * k;
+                        node = getNode(problem, currentX, end.y);
+                        k++;
+                    }
+                    sum+= node.weight;
+                }
+                result.push(sum);
+                return result;
             }
-            return side;
-        }
-
+            }
 
         function bfs_search() {
             var start = problem.start;
@@ -499,7 +412,7 @@ console.log(visited);
                     }
                     var node = rev.pop();
                     $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
-                }, 1000);
+                }, 20);
         };
 
          function routing(visited) {

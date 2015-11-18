@@ -14,9 +14,9 @@ var PriorityQueue = function(){
 PriorityQueue.prototype.enQueue = function(obj){
     this.list.push(obj);
     this.list.sort(function(a,b) {
-        if (a.weight > b.weight) {
+        if (a.total > b.total) {
             return -1;
-        } else if (a.weight < b.weight) {
+        } else if (a.total < b.total) {
             return 1;
         } else {
             return 0;
