@@ -10,7 +10,7 @@
 <div layout = "row">
 <div class="display">
 </div>
-    <div layout = "column">
+    <div layout = "column" style="margin-top: 10px;">
         <div>
         <form name="grid">
         <md-input-container>
@@ -47,7 +47,7 @@
 <script src="./public/lib/angular-material/angular-material.min.js"></script>
 <script src = "utils.js"></script>
 <script src="microphone/microphone.min.js"></script>
-<script src = "intent.js"></script>
+<!--<script src = "intent.js"></script>-->
 <script>
     var searchMap = angular.module('MyApp',['ngMaterial']);
     searchMap.controller('myCtrl', function($scope,$interval){
@@ -109,15 +109,17 @@
                     });
         $scope.alg = "";
         $scope.submit = function(){
+            var visited ;
             if($scope.alg == "BFS"){
-                routingByBfS();
+                visited = bfs_search();
             }else if($scope.alg == "DFS"){
-
+                visited = dfs_search();
             }else if($scope.alg == "ASTAR"){
-
+                visited = aStar_search(problem);
             }else{
 
             }
+            routing(visited);
         };
 
         function isBorder(x, y) {
@@ -191,15 +193,246 @@
         }
 
         //aStar(problem);
-        function aStar(problem) {
-            var queue = new PriorityQueue();
+        function aStar_search(problem) {
 
             var start = problem.start;
             var des = problem.des;
-            queue.push((start, []), getHeuristic(start, des));
+            var queue = new Queue();
             var visited = [start];
+            queue.enQueue(start);
+            while (!queue.isEmpty()) {
+                var current = queue.deQueue();
+                console.log(current);
+            var weight = getHeuristic(problem,current,des);
+                console.log(weight);
+            if(weight > 0 && weight < 10000){
+                console.log("heuristic visited",visited);
+                return visited;
+            }else{
+                console.log("run");
+                var nei = getNei(current,visited);
+                console.log("nei",nei);
+                if (isGoalState(current)) {
+                    visited.push(current);
+                    console.log("visited",visited);
+                    return visited;
+                }
+                for(var i = 0; i < nei.length; i++){
+                    var element = nei[i];
+                    visited.push(element);
+                    queue.enQueue(element);
+                }
+            }
+console.log(visited);
+            }
+        }
 
-        };
+        function getHeuristic(problem,begin,des){
+            var side = checkWeight(problem,begin,des);
+            console.log(side);
+            var start;
+            var end;
+            if (begin.y > des.y) {
+                start = des;
+                end = begin;
+            } else {
+                start = begin;
+                end = des;
+            }
+            var weight = getTotalWeight(problem,start,end,side);
+            console.log(weight);
+            return weight;
+        }
+        function getTotalWeight(problem,upsideNode,downsideNode,side){
+            var count = (Math.abs(upsideNode.x - downsideNode.x) + Math.abs(upsideNode.y - downsideNode.y)) / 40;
+            var sum = 0;
+            var currentX = upsideNode.x;
+            var currentY = upsideNode.y;
+            var node;
+            var k = 0;
+            for(var i = 0; i<count ; i ++) {
+                if (side == "rightDown") {
+                    if (currentX < downsideNode.x) {
+                        currentX = upsideNode.x + 40 * i;
+                        node = getNode(problem, currentX, upsideNode.y);
+                    }else{
+                        currentY = upsideNode.y + 40 * k;
+                        node = getNode(problem, currentX, currentY);
+                        k++;
+                    }
+                    sum+= node.weight;
+                } else if (side == "downRight") {
+                    if (currentY < downsideNode.y) {
+                        currentY = upsideNode.y + 40 * i;
+                        node = getNode(problem, upsideNode.x, currentY);
+
+                    }else{
+                        currentX = downsideNode.x + 40 * k;
+                        node = getNode(problem, currentX, currentY);
+                        k++;
+                    }
+                    sum+= node.weight;
+                } else if (side == "leftDown") {
+                    if (currentX < downsideNode.x) {
+                        currentX = upsideNode.x - 40 * i;
+                        node = getNode(problem, currentX, upsideNode.y);
+                    }else{
+                        currentY = upsideNode.y + 40 * k;
+                        node = getNode(problem, currentX, currentY);
+                        k++;
+                    }
+                    sum+= node.weight;
+                } else if (side == "downLeft") {
+                    if (currentY < downsideNode.y) {
+                        currentY = upsideNode.y + 40 * i;
+                        node = getNode(problem, upsideNode.x, currentY);
+                    }else{
+                        currentX = downsideNode.x - 40 * k;
+                        node = getNode(problem, currentX, currentY);
+                        k++;
+                    }
+                    sum+= node.weight;
+                } else {
+
+                }
+            }
+            return sum;
+        }
+
+
+        function checkWeight(problem,begin,des) {
+            var side ;
+            var start;
+            var end;
+            if (begin.y > des.y) {
+                start = des;
+                end = begin;
+            } else {
+                start = begin;
+                end = des;
+            }
+
+            var count = (Math.abs(des.x - begin.x) + Math.abs(des.y - begin.y)) / 40;
+            var x = 0;
+            var y = 0;
+            if (start.x < end.x) {
+                var rightSide = true;
+                var currentX = start.x;
+                var currentY = start.y;
+                var node = start;
+                var k = 1;
+                if (rightSide) {
+                    for (var i = 1; i < count; i++) {
+                        if (currentX < end.x) {
+                            currentX = start.x + 40 * i;
+                            node = getNode(problem, currentX, start.y);
+                            if (node.type == "wall") {
+                                rightSide = false;
+                                break;
+                            }
+                        } else {
+                            currentY = node.y + 40 * k;
+                            node = getNode(problem, currentX, currentY);
+                            if (node.type == "wall") {
+                                rightSide = false;
+                                break;
+                            }
+                            k++;
+                        }
+                    }
+                    if(rightSide){
+                        side = "rightDown";
+                    }
+                }
+                currentX = start.x;
+                currentY = start.y;
+                node = start;
+                k = 1;
+                if (!rightSide) {
+                    for (var i = 1; i < count; i++) {
+                        if (currentY < end.y) {
+                            currentY = start.y + 40 * i;
+                            node = getNode(problem, currentX, start.y);
+                            if (node.type == "wall") {
+                                rightSide = true;
+                                return null;
+                            }
+                        } else {
+                            currentX = node.x + 40 * k;
+                            node = getNode(problem, currentX, end.y);
+                            if (node.type == "wall") {
+                                rightSide = true;
+                                return null;
+                            }
+                            k++;
+                        }
+                    }
+                    if(!rightSide){
+                        side = "downRight";
+                    }
+                }
+            } else {
+
+                var leftSide = true;
+                var currentX = start.x;
+                var currentY = start.y;
+                var node = start;
+                var k = 1;
+                if (leftSide) {
+                    for (var i = 1; i < count; i++) {
+                        if (currentX > end.x) {
+                            currentX = start.x - 40 * i;
+                            node = getNode(problem, currentX, start.y);
+                            if (node.type == "wall") {
+                                leftSide = false;
+                                break;
+                            }
+                        } else {
+                            currentY = node.y + 40 ;
+                            node = getNode(problem, currentX, currentY);
+                            if (node.type == "wall") {
+                                leftSide = false;
+                                break;
+                            }
+                            k++;
+                        }
+                    }
+                    if(leftSide){
+                        side = "leftDown";
+                    }
+                }
+                currentX = start.x;
+                currentY = start.y;
+                node = start;
+                k = 1;
+                if (!leftSide) {
+                    for (var i = 1; i < count; i++) {
+                        if (currentY < end.y) {
+                            currentY = start.y + 40 * i;
+                            node = getNode(problem, currentX, start.y);
+                            if (node.type == "wall") {
+                                leftSide = true;
+                                return null;
+                            }
+                        } else {
+                            currentX = node.x - 40;
+                            node = getNode(problem, currentX, end.y);
+                            if (node.type == "wall") {
+                                leftSide = true;
+                                return null;
+                            }
+                            k++;
+                        }
+                    }
+                    if(!leftSide){
+                        side = "downLeft";
+                    }
+                }
+
+            }
+            return side;
+        }
+
 
         function bfs_search() {
             var start = problem.start;
@@ -220,6 +453,28 @@
                 }
             }
         };
+
+        function dfs_search() {
+            var start = problem.start;
+            var stack = new Stack();
+            var visited = [];
+            stack.push(start);
+            while (!stack.isEmpty()) {
+                var current = stack.pop();
+                visited.push(current);
+                if (isGoalState(current)) {
+                    visited.push(current);
+                    return visited;
+                }
+                var nei = getNei(current,visited);
+                for(var i = 0; i < nei.length; i++){
+                    var element = nei[i];
+                    stack.push(element);
+                }
+            }
+        };
+
+
         function drawPath(path,polyline){
             var lineFunction = d3.svg.line()
                     .x(function(d){
@@ -244,16 +499,12 @@
                     }
                     var node = rev.pop();
                     $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
-                }, 10);
+                }, 1000);
         };
 
-         function routingByBfS() {
-            var visited = bfs_search();
-
+         function routing(visited) {
             var tempVisited = visited;
-             tempVisited.forEach(function(ele){
-                console.log(ele);
-             });
+
             var des = visited[visited.length - 1];
             var path = [];
             var temp = des;
