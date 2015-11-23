@@ -14,7 +14,19 @@
         <div>
         <form name="grid">
         <md-input-container>
-            Select the algorithm to implement the search:
+            Select the point and algorithm to implement the search:
+            <div layout = "row">
+                <div>
+            <md-radio-group  ng-model="point">
+                <div layout="column">
+                    <md-radio-button value="des:A" flex > A
+                    </md-radio-button>
+                    <md-radio-button value="des:B" flex> B
+                    </md-radio-button>
+                </div>
+            </md-radio-group>
+                </div>
+            <div>
             <md-radio-group  ng-model="alg">
                 <div layout="column">
                     <md-radio-button value="BFS" flex > BFS
@@ -25,20 +37,46 @@
                     </md-radio-button>
                 </div>
             </md-radio-group>
-
+            </div>
+            </div>
         </md-input-container>
-
-
             </form>
-            <hr>
+
             <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
+            <md-button ng-click = "reset()" class = "md-raised md-primary">reset</md-button>
+            <hr>
         </div>
-        <div style="algin:center">
+        <div style="margin-top:30px; ">
             <div id="microphone"></div>
             <pre id="result"></pre>
             <div id="info"></div>
             <div id="error"></div>
+            <hr>
+        </div>
+        <div>
+            <svg width="400" height="250" >
+                <g>
+                    <rect x="5" y="5" height="40" width="40" stroke="#2D801C"  fill="#3CAB26" />
+                    <text x="60" y="25" fill=""> ---> &nbsp; &nbsp; Grass</text>
+                </g>
+                <g>
+                    <rect x="5" y="50" height="40" width="40" stroke="#C7C7C7"  fill="#3399ff" />
+                    <text x="60" y="75" fill=""> --->&nbsp;  &nbsp; Swamp</text>
+                </g>
+                <g>
+                    <rect x="5" y="95" height="40" width="40" stroke="#FF6600"  fill="#B3210B" />
+                    <text x="60" y="120" fill=""> ---> &nbsp; &nbsp; Wall</text>
+                </g>
+                <g>
+                    <rect x="5" y="140" height="40" width="40" stroke="#2D801C"  fill="#ab13a5" />
+                    <text x="60" y="165" fill=""> --->  &nbsp; &nbsp;Start</text>
+                </g>
+                <g>
+                    <rect x="5" y="185" height="40" width="40" stroke="#2D801C"  fill="#ab6d14" />
+                    <text x="60" y="210" fill=""> ---> &nbsp; &nbsp;Destination</text>
+                </g>
 
+            </svg>
         </div>
     </div>
     </div>
@@ -76,55 +114,66 @@
                 .enter()
                 .append("rect");
 
-                rect.attr("x", function (d) {
-                            return d.x;
-                        })
-                        .attr("y", function (d) {
-                            return d.y;
-                        })
-                        .attr("width", function (d) {
-                            return squareLength;
-                        })
-                        .attr("height", function (d) {
-                            return squareLength;
-                        })
-                        .attr("class", function (d) {
-                            return d.type;
-                        })
-                        .attr("id", function (d) {
-                            return d.x + "_" + d.y;
-                        });
+        rect.attr("x", function (d) {
+            return d.x;
+        })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("width", function (d) {
+                    return squareLength;
+                })
+                .attr("height", function (d) {
+                    return squareLength;
+                })
+                .attr("class", function (d) {
+                    return d.type;
+                })
+                .attr("id", function (d) {
+                    return d.x + "_" + d.y;
+                });
 
 
-        var startDes = [problem.start,problem.des[0],problem.des[1]];
-            var text = svg.selectAll("text")
-                    .data(startDes)
-                    .enter()
-                    .append("text");
-            text.attr("x", function (d) {
-                return d.x;
-            })
-                    .attr("y", function (d) {
-                        return d.y + 25;
-                    })
-                    .text(function (d) {
-                        return d.name;
-                    });
+        var startDes = [problem.start, problem.des[0], problem.des[1]];
+        var text = svg.selectAll("text")
+                .data(startDes)
+                .enter()
+                .append("text");
+        text.attr("x", function (d) {
+            return d.x;
+        })
+                .attr("y", function (d) {
+                    return d.y + 25;
+                })
+                .text(function (d) {
+                    return d.name;
+                });
+
+
         $scope.alg = "";
+        $scope.point = "";
+        var visitedRoute=[] ;
+        var visitedRouteClone=[] ;
         $scope.submit = function(){
-            var visited ;
+
             if($scope.alg == "BFS"){
-                visited = bfs_search();
+                visitedRoute = bfs_search($scope.point);
+                visitedRouteClone = visitedRoute;
+                console.log(visitedRoute);
             }else if($scope.alg == "DFS"){
-                visited = dfs_search();
+                visitedRoute = dfs_search($scope.point);
             }else if($scope.alg == "ASTAR"){
-                visited = aStar_search(problem);
+                visitedRoute = aStar_search(problem,$scope.point);
             }else{
 
             }
-            routing(visited);
-        };
 
+            routing(visitedRoute);
+        };
+        $scope.reset = function(){
+            console.log(visitedRouteClone);
+            reset(visitedRouteClone);
+        }
         function isBorder(x, y) {
             return x == 0 || y == 0 || x == (gridSize.x - 1) || y == (gridSize.y - 1);
         };
@@ -345,7 +394,7 @@
             }
             }
 
-        function bfs_search() {
+        function bfs_search(des) {
             var start = problem.start;
             var queue = new Queue();
             var visited = [start];
@@ -353,7 +402,7 @@
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
                 var nei = getNei(current,visited);
-                if (isGoalState(current)) {
+                if (isGoalState(current,des)) {
                     visited.push(current);
                     return visited;
                 }
@@ -409,13 +458,20 @@
                         $interval.cancel(cb);
                     }
                     var node = rev.pop();
-                    $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
+                    $("#" + node.x + "_" + node.y).css("fill", "#00FFFF");
                 }, 20);
         };
 
+        function reset(visitedRouteClone) {
+                console.log(visitedRouteClone);
+                var node = visitedRouteClone.pop();
+                $("#" + node.x + "_" + node.y).css("fill", "none");
+
+        };
+
+
          function routing(visited) {
             var tempVisited = visited;
-
             var des = visited[visited.length - 1];
             var path = [];
             var temp = des;
@@ -449,7 +505,6 @@
                 temp = node;
             }
              var rev = path.reverse();
-             console.log(rev);
             changeColor(tempVisited,rev,polyline);
         };
         function getNextPath(visited,x,y){
@@ -498,12 +553,13 @@
             return problem.map[x / 40 * 15 + y / 40];
         };
 
-        function isGoalState(vertex) {
-            if (vertex.type == "des") {
-                return true;
-            } else {
-                return false;
+        function isGoalState(vertex,des) {
+            if(vertex.name) {
+                if (vertex.name == des) {
+                    return true;
+                }
             }
+            return false;
         };
         mic.onresult = function (intent, entities) {
            /* var r = kv("intent", intent);
@@ -523,7 +579,8 @@
             document.getElementById("result").innerHTML = r;*/
             console.log(entities);
             if(entities.alg.value == "bfs"){
-                var visited = bfs_search();
+                var visited = bfs_search("des:"+entities.point.value.toUpperCase());
+                console.log(visited);
                 routing(visited);
             }else if(entities.alg.value == "a_star"){
                 var visited = aStar_search(problem);
