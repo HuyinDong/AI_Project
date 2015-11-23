@@ -14,28 +14,69 @@
         <div>
         <form name="grid">
         <md-input-container>
-            Select the algorithm to implement the search:
-            <md-radio-group flex ng-model="alg">
+            Select the point and algorithm to implement the search:
+            <div layout = "row">
+                <div>
+            <md-radio-group  ng-model="point">
                 <div layout="column">
-                    <md-radio-button value="BFS" flex='100'> BFS
+                    <md-radio-button value="des:A" flex > A
                     </md-radio-button>
-                    <md-radio-button value="DFS" flex='100'> DFS
-                    </md-radio-button>
-                    <md-radio-button value="ASTAR" flex='100'> A*
+                    <md-radio-button value="des:B" flex> B
                     </md-radio-button>
                 </div>
             </md-radio-group>
+                </div>
+            <div>
+            <md-radio-group  ng-model="alg">
+                <div layout="column">
+                    <md-radio-button value="BFS" flex > BFS
+                    </md-radio-button>
+                    <md-radio-button value="DFS" flex> DFS
+                    </md-radio-button>
+                    <md-radio-button value="ASTAR" flex> A*
+                    </md-radio-button>
+                </div>
+            </md-radio-group>
+            </div>
+            </div>
         </md-input-container>
-            <hr>
-            <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
             </form>
+
+            <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
+            <md-button ng-click = "reset()" class = "md-raised md-primary">reset</md-button>
+            <hr>
         </div>
-        <div style="algin:center">
+        <div style="margin-top:30px; ">
             <div id="microphone"></div>
             <pre id="result"></pre>
             <div id="info"></div>
             <div id="error"></div>
+            <hr>
+        </div>
+        <div>
+            <svg width="400" height="250" >
+                <g>
+                    <rect x="5" y="5" height="40" width="40" stroke="#2D801C"  fill="#3CAB26" />
+                    <text x="60" y="25" fill=""> ---> &nbsp; &nbsp; Grass</text>
+                </g>
+                <g>
+                    <rect x="5" y="50" height="40" width="40" stroke="#C7C7C7"  fill="#3399ff" />
+                    <text x="60" y="75" fill=""> --->&nbsp;  &nbsp; Swamp</text>
+                </g>
+                <g>
+                    <rect x="5" y="95" height="40" width="40" stroke="#FF6600"  fill="#B3210B" />
+                    <text x="60" y="120" fill=""> ---> &nbsp; &nbsp; Wall</text>
+                </g>
+                <g>
+                    <rect x="5" y="140" height="40" width="40" stroke="#2D801C"  fill="#ab13a5" />
+                    <text x="60" y="165" fill=""> --->  &nbsp; &nbsp;Start</text>
+                </g>
+                <g>
+                    <rect x="5" y="185" height="40" width="40" stroke="#2D801C"  fill="#ab6d14" />
+                    <text x="60" y="210" fill=""> ---> &nbsp; &nbsp;Destination</text>
+                </g>
 
+            </svg>
         </div>
     </div>
     </div>
@@ -47,7 +88,7 @@
 <script src="./public/lib/angular-material/angular-material.min.js"></script>
 <script src = "utils.js"></script>
 <script src="microphone/microphone.min.js"></script>
-<!--<script src = "intent.js"></script>-->
+<script src = "intent.js"></script>
 <script>
     var searchMap = angular.module('MyApp',['ngMaterial']);
     searchMap.controller('myCtrl', function($scope,$interval){
@@ -73,55 +114,66 @@
                 .enter()
                 .append("rect");
 
-                rect.attr("x", function (d) {
-                            return d.x;
-                        })
-                        .attr("y", function (d) {
-                            return d.y;
-                        })
-                        .attr("width", function (d) {
-                            return squareLength;
-                        })
-                        .attr("height", function (d) {
-                            return squareLength;
-                        })
-                        .attr("class", function (d) {
-                            return d.type;
-                        })
-                        .attr("id", function (d) {
-                            return d.x + "_" + d.y;
-                        });
+        rect.attr("x", function (d) {
+            return d.x;
+        })
+                .attr("y", function (d) {
+                    return d.y;
+                })
+                .attr("width", function (d) {
+                    return squareLength;
+                })
+                .attr("height", function (d) {
+                    return squareLength;
+                })
+                .attr("class", function (d) {
+                    return d.type;
+                })
+                .attr("id", function (d) {
+                    return d.x + "_" + d.y;
+                });
 
-        console.log(problem);
-        var startDes = [problem.start,problem.des];
-            var text = svg.selectAll("text")
-                    .data(startDes)
-                    .enter()
-                    .append("text");
-            text.attr("x", function (d) {
-                return d.x;
-            })
-                    .attr("y", function (d) {
-                        return d.y + 20;
-                    })
-                    .text(function (d) {
-                        return d.type;
-                    });
+
+        var startDes = [problem.start, problem.des[0], problem.des[1]];
+        var text = svg.selectAll("text")
+                .data(startDes)
+                .enter()
+                .append("text");
+        text.attr("x", function (d) {
+            return d.x;
+        })
+                .attr("y", function (d) {
+                    return d.y + 25;
+                })
+                .text(function (d) {
+                    return d.name;
+                });
+
+
         $scope.alg = "";
+        $scope.point = "";
+        var visitedRoute=[] ;
+        var visitedRouteClone=[] ;
         $scope.submit = function(){
-            var visited ;
+
             if($scope.alg == "BFS"){
-                visited = bfs_search();
+                visitedRoute = bfs_search($scope.point);
+                visitedRouteClone = visitedRoute;
+                console.log(visitedRoute);
             }else if($scope.alg == "DFS"){
-                visited = dfs_search();
+                visitedRoute = dfs_search($scope.point);
             }else if($scope.alg == "ASTAR"){
-                visited = aStar_search(problem);
+                visitedRoute = aStar_search(problem,$scope.point);
             }else{
 
             }
-            routing(visited);
-        };
 
+            routing(visitedRoute);
+        };
+        $scope.reset = function(){
+            console.log(visitedRouteClone);
+            reset(visitedRouteClone);
+        }
         function isBorder(x, y) {
             return x == 0 || y == 0 || x == (gridSize.x - 1) || y == (gridSize.y - 1);
         };
@@ -133,6 +185,8 @@
             var pre = "";
             var map = [];
             var problem = {};
+            problem.des = [];
+            var desName = ["A","B"];
             for (var i = 0; i < gridSize.x; i++) {
                 for (var j = 0; j < gridSize.y; j++) {
                     var cell = {};
@@ -158,15 +212,17 @@
                     if (start == 0) {
                         startType = Math.random() < 0.02;
                     }
-                    if (des == 0) {
+                    if (des < 2) {
                         desType = Math.random() < 0.02;
                     }
                     if (startType) {
                         cell.type = "start";
+                        cell.name = "start";
                         start++;
                     }
                     if (desType) {
                         cell.type = "des";
+                        cell.name = "des:"+desName.pop();
                         des++;
                     }
                     if (cell.type == "wall") {
@@ -184,11 +240,12 @@
                         problem.start = cell;
                     }
                     if (cell.type == "des") {
-                        problem.des = cell;
+                        problem.des.push(cell);
                     }
                 }
             }
             problem.map = map;
+            console.log(problem);
             return problem;
         }
 
@@ -202,19 +259,45 @@
             queue.enQueue(start);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
-                console.log(current);
             var weight = getHeuristic(problem,current,des);
-                console.log(weight);
-            if(weight > 0 && weight < 10000){
-                console.log("heuristic visited",visited);
+                var min = weight.sort(function(a, b){return a-b})[0];
+            if(min < 10000){
+                current.total = min;
+               var pq = new PriorityQueue();
+                var newVisited = [current];
+                pq.enQueue(current);
+                while(!pq.isEmpty()){
+                    current = pq.deQueue();
+                    if(isGoalState(current)){
+                        for(var i = newVisited.length-1; i >=0; i--){
+                            if(newVisited[i].type == "des"){
+                                break;
+                            }else{
+                                newVisited.splice(newVisited.length-1,1);
+                            }
+                        }
+                        return visited.concat(newVisited);
+                    }
+                    newVisited.push(current);
+                    var nei = getNei(current,newVisited);
+                    for(var i = 0; i < nei.length; i++){
+                        var element = nei[i];
+                        weight = getHeuristic(problem,element,des);
+                        console.log(weight);
+                         min = weight.sort(function(a, b){return a-b})[0];
+                        element.total = min;
+                        console.log(min);
+                        console.log(element);
+                        newVisited.push(element);
+                        pq.enQueue(element);
+                    }
+                }
+
                 return visited;
             }else{
-                console.log("run");
                 var nei = getNei(current,visited);
-                console.log("nei",nei);
                 if (isGoalState(current)) {
                     visited.push(current);
-                    console.log("visited",visited);
                     return visited;
                 }
                 for(var i = 0; i < nei.length; i++){
@@ -223,218 +306,95 @@
                     queue.enQueue(element);
                 }
             }
-console.log(visited);
             }
         }
 
-        function getHeuristic(problem,begin,des){
-            var side = checkWeight(problem,begin,des);
-            console.log(side);
-            var start;
-            var end;
-            if (begin.y > des.y) {
-                start = des;
-                end = begin;
-            } else {
-                start = begin;
-                end = des;
-            }
-            var weight = getTotalWeight(problem,start,end,side);
-            console.log(weight);
-            return weight;
-        }
-        function getTotalWeight(problem,upsideNode,downsideNode,side){
-            var count = (Math.abs(upsideNode.x - downsideNode.x) + Math.abs(upsideNode.y - downsideNode.y)) / 40;
-            var sum = 0;
-            var currentX = upsideNode.x;
-            var currentY = upsideNode.y;
+        function getHeuristic(problem,node1,node2){
+            var count = (Math.abs(node1.x - node2.x) + Math.abs(node1.y - node2.y)) / 40;
+            count--;
+
+            var k = 1;
             var node;
-            var k = 0;
-            for(var i = 0; i<count ; i ++) {
-                if (side == "rightDown") {
-                    if (currentX < downsideNode.x) {
-                        currentX = upsideNode.x + 40 * i;
-                        node = getNode(problem, currentX, upsideNode.y);
-                    }else{
-                        currentY = upsideNode.y + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "downRight") {
-                    if (currentY < downsideNode.y) {
-                        currentY = upsideNode.y + 40 * i;
-                        node = getNode(problem, upsideNode.x, currentY);
-
-                    }else{
-                        currentX = downsideNode.x + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "leftDown") {
-                    if (currentX < downsideNode.x) {
-                        currentX = upsideNode.x - 40 * i;
-                        node = getNode(problem, currentX, upsideNode.y);
-                    }else{
-                        currentY = upsideNode.y + 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else if (side == "downLeft") {
-                    if (currentY < downsideNode.y) {
-                        currentY = upsideNode.y + 40 * i;
-                        node = getNode(problem, upsideNode.x, currentY);
-                    }else{
-                        currentX = downsideNode.x - 40 * k;
-                        node = getNode(problem, currentX, currentY);
-                        k++;
-                    }
-                    sum+= node.weight;
-                } else {
-
-                }
-            }
-            return sum;
-        }
-
-
-        function checkWeight(problem,begin,des) {
-            var side ;
             var start;
             var end;
-            if (begin.y > des.y) {
-                start = des;
-                end = begin;
+            var result = [];
+            if (node1.y > node2.y) {
+                start = node2;
+                end = node1;
             } else {
-                start = begin;
-                end = des;
+                start = node1;
+                end = node2;
+            }
+            var sum = 0;
+            var currentX  = start.x;
+            var currentY  = start.y;
+            if(start.x < end.x){
+                for(var i = 0; i < count; i ++) {
+                    if(currentX < end.x){
+                        currentX = start.x + 40 * (i+1);
+                        node = getNode(problem, currentX, start.y);
+                    }
+                    else {
+                        currentY = start.y + 40 * k;
+                        node = getNode(problem, end.x, currentY);
+                        k++;
+                    }
+                    sum += node.weight;
+                }
+                result.push(sum);
+                var sum = 0;
+                var k = 1;
+                var currentX  = start.x;
+                var currentY  = start.y;
+                for(var i = 0; i <count; i ++) {
+                    if (currentY < end.y) {
+                        currentY = start.y + 40 * (i+1);
+                        node = getNode(problem, start.x, currentY);
+                    }else{
+                        currentX = start.x + 40 * k;
+                        node = getNode(problem, currentX, end.y);
+                        k++;
+                    }
+                    sum+= node.weight;
+                }
+                result.push(sum);
+                return result;
+                }else {
+                for(var i = 0; i < count; i ++) {
+                    if (currentX > end.x) {
+                        currentX = start.x - 40 * (i+1);
+                        node = getNode(problem, currentX, start.y);
+                    } else {
+
+                        currentY = start.y + 40 * k;
+                        node = getNode(problem, end.x, currentY);
+                        k++;
+                    }
+                    sum += node.weight;
+                }
+                result.push(sum);
+                var sum = 0;
+                var k = 1;
+                var currentX  = start.x;
+                var currentY  = start.y;
+                for( var i = 0; i < count; i ++) {
+                    if (currentY < end.y) {
+                        currentY = start.y + 40 * (i+1);
+                        node = getNode(problem, start.x, currentY);
+                    }else{
+
+                        currentX = start.x - 40 * k;
+                        node = getNode(problem, currentX, end.y);
+                        k++;
+                    }
+                    sum+= node.weight;
+                }
+                result.push(sum);
+                return result;
+            }
             }
 
-            var count = (Math.abs(des.x - begin.x) + Math.abs(des.y - begin.y)) / 40;
-            var x = 0;
-            var y = 0;
-            if (start.x < end.x) {
-                var rightSide = true;
-                var currentX = start.x;
-                var currentY = start.y;
-                var node = start;
-                var k = 1;
-                if (rightSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentX < end.x) {
-                            currentX = start.x + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                rightSide = false;
-                                break;
-                            }
-                        } else {
-                            currentY = node.y + 40 * k;
-                            node = getNode(problem, currentX, currentY);
-                            if (node.type == "wall") {
-                                rightSide = false;
-                                break;
-                            }
-                            k++;
-                        }
-                    }
-                    if(rightSide){
-                        side = "rightDown";
-                    }
-                }
-                currentX = start.x;
-                currentY = start.y;
-                node = start;
-                k = 1;
-                if (!rightSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentY < end.y) {
-                            currentY = start.y + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                rightSide = true;
-                                return null;
-                            }
-                        } else {
-                            currentX = node.x + 40 * k;
-                            node = getNode(problem, currentX, end.y);
-                            if (node.type == "wall") {
-                                rightSide = true;
-                                return null;
-                            }
-                            k++;
-                        }
-                    }
-                    if(!rightSide){
-                        side = "downRight";
-                    }
-                }
-            } else {
-
-                var leftSide = true;
-                var currentX = start.x;
-                var currentY = start.y;
-                var node = start;
-                var k = 1;
-                if (leftSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentX > end.x) {
-                            currentX = start.x - 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                leftSide = false;
-                                break;
-                            }
-                        } else {
-                            currentY = node.y + 40 ;
-                            node = getNode(problem, currentX, currentY);
-                            if (node.type == "wall") {
-                                leftSide = false;
-                                break;
-                            }
-                            k++;
-                        }
-                    }
-                    if(leftSide){
-                        side = "leftDown";
-                    }
-                }
-                currentX = start.x;
-                currentY = start.y;
-                node = start;
-                k = 1;
-                if (!leftSide) {
-                    for (var i = 1; i < count; i++) {
-                        if (currentY < end.y) {
-                            currentY = start.y + 40 * i;
-                            node = getNode(problem, currentX, start.y);
-                            if (node.type == "wall") {
-                                leftSide = true;
-                                return null;
-                            }
-                        } else {
-                            currentX = node.x - 40;
-                            node = getNode(problem, currentX, end.y);
-                            if (node.type == "wall") {
-                                leftSide = true;
-                                return null;
-                            }
-                            k++;
-                        }
-                    }
-                    if(!leftSide){
-                        side = "downLeft";
-                    }
-                }
-
-            }
-            return side;
-        }
-
-
-        function bfs_search() {
+        function bfs_search(des) {
             var start = problem.start;
             var queue = new Queue();
             var visited = [start];
@@ -442,7 +402,7 @@ console.log(visited);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
                 var nei = getNei(current,visited);
-                if (isGoalState(current)) {
+                if (isGoalState(current,des)) {
                     visited.push(current);
                     return visited;
                 }
@@ -498,13 +458,20 @@ console.log(visited);
                         $interval.cancel(cb);
                     }
                     var node = rev.pop();
-                    $("#" + node.x + "_" + node.y).css("fill", "#cccccc");
-                }, 1000);
+                    $("#" + node.x + "_" + node.y).css("fill", "#00FFFF");
+                }, 20);
         };
+
+        function reset(visitedRouteClone) {
+                console.log(visitedRouteClone);
+                var node = visitedRouteClone.pop();
+                $("#" + node.x + "_" + node.y).css("fill", "none");
+
+        };
+
 
          function routing(visited) {
             var tempVisited = visited;
-
             var des = visited[visited.length - 1];
             var path = [];
             var temp = des;
@@ -548,9 +515,6 @@ console.log(visited);
             }
         };
 
-
-
-
         function getNei(node,visited) {
             var nei = [];
             var newNode;
@@ -589,14 +553,42 @@ console.log(visited);
             return problem.map[x / 40 * 15 + y / 40];
         };
 
-        function isGoalState(vertex) {
-            if (vertex.type == "des") {
-                return true;
-            } else {
-                return false;
+        function isGoalState(vertex,des) {
+            if(vertex.name) {
+                if (vertex.name == des) {
+                    return true;
+                }
             }
+            return false;
         };
+        mic.onresult = function (intent, entities) {
+           /* var r = kv("intent", intent);
 
+            for (var k in entities) {
+                var e = entities[k];
+                console.log(entities);
+                if (!(e instanceof Array)) {
+                    r += kv(k, e.value);
+                } else {
+                    for (var i = 0; i < e.length; i++) {
+                        r += kv(k, e[i].value);
+                    }
+                }
+            }
+            console.log(r);
+            document.getElementById("result").innerHTML = r;*/
+            console.log(entities);
+            if(entities.alg.value == "bfs"){
+                var visited = bfs_search("des:"+entities.point.value.toUpperCase());
+                console.log(visited);
+                routing(visited);
+            }else if(entities.alg.value == "a_star"){
+                var visited = aStar_search(problem);
+                routing(visited);
+            }
+
+
+        };
     });
 
 </script>
