@@ -95,8 +95,8 @@
                             return d.x + "_" + d.y;
                         });
 
-        console.log(problem);
-        var startDes = [problem.start,problem.des];
+
+        var startDes = [problem.start,problem.des[0],problem.des[1]];
             var text = svg.selectAll("text")
                     .data(startDes)
                     .enter()
@@ -105,10 +105,10 @@
                 return d.x;
             })
                     .attr("y", function (d) {
-                        return d.y + 20;
+                        return d.y + 25;
                     })
                     .text(function (d) {
-                        return d.type;
+                        return d.name;
                     });
         $scope.alg = "";
         $scope.submit = function(){
@@ -136,6 +136,8 @@
             var pre = "";
             var map = [];
             var problem = {};
+            problem.des = [];
+            var desName = ["A","B"];
             for (var i = 0; i < gridSize.x; i++) {
                 for (var j = 0; j < gridSize.y; j++) {
                     var cell = {};
@@ -161,15 +163,17 @@
                     if (start == 0) {
                         startType = Math.random() < 0.02;
                     }
-                    if (des == 0) {
+                    if (des < 2) {
                         desType = Math.random() < 0.02;
                     }
                     if (startType) {
                         cell.type = "start";
+                        cell.name = "start";
                         start++;
                     }
                     if (desType) {
                         cell.type = "des";
+                        cell.name = "des:"+desName.pop();
                         des++;
                     }
                     if (cell.type == "wall") {
@@ -187,11 +191,12 @@
                         problem.start = cell;
                     }
                     if (cell.type == "des") {
-                        problem.des = cell;
+                        problem.des.push(cell);
                     }
                 }
             }
             problem.map = map;
+            console.log(problem);
             return problem;
         }
 
@@ -205,11 +210,9 @@
             queue.enQueue(start);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
-                console.log("current",current);
             var weight = getHeuristic(problem,current,des);
                 var min = weight.sort(function(a, b){return a-b})[0];
             if(min < 10000){
-                console.log("min",min);
                 current.total = min;
                var pq = new PriorityQueue();
                 var newVisited = [current];
@@ -217,8 +220,6 @@
                 while(!pq.isEmpty()){
                     current = pq.deQueue();
                     if(isGoalState(current)){
-                        console.log("visited",visited);
-                        console.log("new",newVisited);
                         for(var i = newVisited.length-1; i >=0; i--){
                             if(newVisited[i].type == "des"){
                                 break;
@@ -241,7 +242,6 @@
                         newVisited.push(element);
                         pq.enQueue(element);
                     }
-                    console.log(pq);
                 }
 
                 return visited;
@@ -459,9 +459,6 @@
                 }
             }
         };
-
-
-
 
         function getNei(node,visited) {
             var nei = [];
