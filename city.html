@@ -15,9 +15,9 @@
         <form name="grid">
         <md-input-container>
             Select the algorithm to implement the search:
-            <md-radio-group flex ng-model="alg">
+            <md-radio-group  ng-model="alg">
                 <div layout="column">
-                    <md-radio-button value="BFS" flex> BFS
+                    <md-radio-button value="BFS" flex > BFS
                     </md-radio-button>
                     <md-radio-button value="DFS" flex> DFS
                     </md-radio-button>
@@ -25,10 +25,13 @@
                     </md-radio-button>
                 </div>
             </md-radio-group>
+
         </md-input-container>
+
+
+            </form>
             <hr>
             <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
-            </form>
         </div>
         <div style="algin:center">
             <div id="microphone"></div>
@@ -47,7 +50,7 @@
 <script src="./public/lib/angular-material/angular-material.min.js"></script>
 <script src = "utils.js"></script>
 <script src="microphone/microphone.min.js"></script>
-<!--<script src = "intent.js"></script>-->
+<script src = "intent.js"></script>
 <script>
     var searchMap = angular.module('MyApp',['ngMaterial']);
     searchMap.controller('myCtrl', function($scope,$interval){
@@ -120,7 +123,6 @@
 
             }
             routing(visited);
-            console.log(visited);
         };
 
         function isBorder(x, y) {
@@ -204,36 +206,49 @@
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
                 console.log("current",current);
-            var weight = getTotalWeight(problem,current,des);
-                var min = weight.sort()[1];
-
+            var weight = getHeuristic(problem,current,des);
+                var min = weight.sort(function(a, b){return a-b})[0];
             if(min < 10000){
                 console.log("min",min);
                 current.total = min;
                var pq = new PriorityQueue();
+                var newVisited = [current];
                 pq.enQueue(current);
-              /*  while(!pq.isEmpty()){
+                while(!pq.isEmpty()){
                     current = pq.deQueue();
                     if(isGoalState(current)){
-                        return visited;
+                        console.log("visited",visited);
+                        console.log("new",newVisited);
+                        for(var i = newVisited.length-1; i >=0; i--){
+                            if(newVisited[i].type == "des"){
+                                break;
+                            }else{
+                                newVisited.splice(newVisited.length-1,1);
+                            }
+                        }
+                        return visited.concat(newVisited);
                     }
-                    visited.push(current);
-                    var nei = getNei(current,visited);
+                    newVisited.push(current);
+                    var nei = getNei(current,newVisited);
                     for(var i = 0; i < nei.length; i++){
                         var element = nei[i];
-                        visited.push(element);
-                        queue.enQueue(element);
+                        weight = getHeuristic(problem,element,des);
+                        console.log(weight);
+                         min = weight.sort(function(a, b){return a-b})[0];
+                        element.total = min;
+                        console.log(min);
+                        console.log(element);
+                        newVisited.push(element);
+                        pq.enQueue(element);
                     }
+                    console.log(pq);
                 }
-                    */
+
                 return visited;
             }else{
-                console.log("run");
                 var nei = getNei(current,visited);
-                console.log("nei",nei);
                 if (isGoalState(current)) {
                     visited.push(current);
-                    console.log("visited",visited);
                     return visited;
                 }
                 for(var i = 0; i < nei.length; i++){
@@ -245,28 +260,10 @@
             }
         }
 
-        function getHeuristic(problem,begin,des){
-          //  var side = checkWeight(problem,begin,des);
-            //console.log(side);
-            var start;
-            var end;
-            if (begin.y > des.y) {
-                start = des;
-                end = begin;
-            } else {
-                start = begin;
-                end = des;
-            }
-            var weight = getTotalWeight(problem,start,end,side);
-            console.log(weight);
-            return weight;
-        }
-       // var test = getTotalWeight(problem,problem.start,problem.des);
-       // console.log(test);
-        function getTotalWeight(problem,node1,node2){
+        function getHeuristic(problem,node1,node2){
             var count = (Math.abs(node1.x - node2.x) + Math.abs(node1.y - node2.y)) / 40;
             count--;
-            var sum = 0;
+
             var k = 1;
             var node;
             var start;
@@ -279,6 +276,7 @@
                 start = node1;
                 end = node2;
             }
+            var sum = 0;
             var currentX  = start.x;
             var currentY  = start.y;
             if(start.x < end.x){
@@ -451,6 +449,7 @@
                 temp = node;
             }
              var rev = path.reverse();
+             console.log(rev);
             changeColor(tempVisited,rev,polyline);
         };
         function getNextPath(visited,x,y){
@@ -509,7 +508,33 @@
                 return false;
             }
         };
+        mic.onresult = function (intent, entities) {
+           /* var r = kv("intent", intent);
 
+            for (var k in entities) {
+                var e = entities[k];
+                console.log(entities);
+                if (!(e instanceof Array)) {
+                    r += kv(k, e.value);
+                } else {
+                    for (var i = 0; i < e.length; i++) {
+                        r += kv(k, e[i].value);
+                    }
+                }
+            }
+            console.log(r);
+            document.getElementById("result").innerHTML = r;*/
+            console.log(entities);
+            if(entities.alg.value == "bfs"){
+                var visited = bfs_search();
+                routing(visited);
+            }else if(entities.alg.value == "a_star"){
+                var visited = aStar_search(problem);
+                routing(visited);
+            }
+
+
+        };
     });
 
 </script>

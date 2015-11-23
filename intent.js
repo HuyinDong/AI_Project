@@ -18,23 +18,7 @@ mic.onaudiostart = function () {
 mic.onaudioend = function () {
     info("Recording stopped, processing started");
 };
-mic.onresult = function (intent, entities) {
-    var r = kv("intent", intent);
 
-    for (var k in entities) {
-        var e = entities[k];
-
-        if (!(e instanceof Array)) {
-            r += kv(k, e.value);
-        } else {
-            for (var i = 0; i < e.length; i++) {
-                r += kv(k, e[i].value);
-            }
-        }
-    }
-
-    document.getElementById("result").innerHTML = r;
-};
 mic.onerror = function (err) {
     error("Error: " + err);
 };
@@ -45,7 +29,7 @@ mic.ondisconnected = function () {
     info("Microphone is not connected");
 };
 
-mic.connect("D3GYBTFQP2SNHUOJZB6ZBWE42MXKUEYO");
+mic.connect("ANPILOKOGJCEKRBYFSV4V57RS75LGQ6W");
 // mic.start();
 // mic.stop();
 
