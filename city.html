@@ -33,6 +33,8 @@
                     </md-radio-button>
                     <md-radio-button value="DFS" flex> DFS
                     </md-radio-button>
+                    <md-radio-button value="BestFS" flex> BestFS
+                    </md-radio-button>
                     <md-radio-button value="ASTAR" flex> A*
                     </md-radio-button>
                 </div>
@@ -167,10 +169,12 @@
                 visitedRoute = dfs_search($scope.point);
             }else if($scope.alg == "ASTAR"){
                 visitedRoute = aStar_search(problem,$scope.point);
+            }else if($scope.alg == "BestFS"){
+                visitedRoute = best_first_search(problem,$scope.point);
             }else{
 
             }
-
+            console.log(visitedRoute);
             routing(visitedRoute);
         };
         $scope.reset = function(){
@@ -252,28 +256,90 @@
             return problem;
         }
 
+        function best_first_search(problem,des){
+            console.log(des);
+            var frontier = new PriorityQueue();
+            var start = problem.start;
+            var visited = [start];
+            var nei;
+            var current;
+            var  priority;
+            frontier.enQueue(start);
+            while(!frontier.isEmpty()){
+                current = frontier.deQueue();
+                if(isGoalState(current,des)){
+                    console.log(visited);
+                    for(var i = visited.length-1; i >=0; i--){
+                        if(isGoalState(visited[i],des)){
+                            console.log(des);
+                            break;
+                        }else{
+                            visited.splice(visited.length-1,1);
+                        }
+                    }
+                    return visited;
+                }
+                var destination;
+                for(var i = 0 ; i < problem.des.length; i++){
+                    if(problem.des[i].name = des){
+                        destination = problem.des[i];
+                    }
+                }
+                console.log(destination);
+                nei = getNei(current,visited);
+                for(var i = 0; i < nei.length; i++){
+                    priority = getHeuristic(problem,nei[i],destination).sort(function(a, b){return a-b})[0];
+                    nei[i].total = priority;
+                    frontier.enQueue(nei[i]);
+                    visited.push(nei[i]);
+                }
+            }
+        }
+       /* var visited = [];
+        var priority;
+        var nei = getNei(problem.start,visited);
+        console.log(nei);
+        for(var i = 0; i < nei.length; i++){
+            priority = getHeuristic(problem,nei[i],problem.des[0]).sort(function(a, b){return a-b})[0];
+            nei[i].total = priority;
+            visited.push(nei[i]);
+        }
+        console.log(visited);
+*/
+       // var visitedRoute = best_first_search(problem,problem.des[0]);
+      // console.log(visitedRoute);
+        //routing(visitedRoute);
         //aStar(problem);
-        function aStar_search(problem) {
+        function aStar_search(problem,des) {
 
             var start = problem.start;
-            var des = problem.des;
             var queue = new Queue();
             var visited = [start];
             queue.enQueue(start);
+            var desNode ;
+            for(var i = 0; i < problem.des.length; i++){
+                if(problem.des[i].name == des){
+                    desNode = problem.des[i];
+                }
+            }
+            console.log(desNode);
             while (!queue.isEmpty()) {
                 var current = queue.deQueue();
-            var weight = getHeuristic(problem,current,des);
+                var weight = getHeuristic(problem,current,desNode);
                 var min = weight.sort(function(a, b){return a-b})[0];
+                console.log(min);
             if(min < 10000){
+                console.log("Ok");
                 current.total = min;
                var pq = new PriorityQueue();
                 var newVisited = [current];
                 pq.enQueue(current);
                 while(!pq.isEmpty()){
                     current = pq.deQueue();
-                    if(isGoalState(current)){
+                    console.log(current);
+                    if(isGoalState(current,des)){
                         for(var i = newVisited.length-1; i >=0; i--){
-                            if(newVisited[i].type == "des"){
+                            if(isGoalState(newVisited[i],des)){
                                 break;
                             }else{
                                 newVisited.splice(newVisited.length-1,1);
@@ -285,21 +351,19 @@
                     var nei = getNei(current,newVisited);
                     for(var i = 0; i < nei.length; i++){
                         var element = nei[i];
-                        weight = getHeuristic(problem,element,des);
-                        console.log(weight);
+                        weight = getHeuristic(problem,element,desNode);
                          min = weight.sort(function(a, b){return a-b})[0];
                         element.total = min;
-                        console.log(min);
-                        console.log(element);
                         newVisited.push(element);
                         pq.enQueue(element);
                     }
+                    console.log(newVisited);
                 }
 
                 return visited;
             }else{
                 var nei = getNei(current,visited);
-                if (isGoalState(current)) {
+                if (isGoalState(current,des)) {
                     visited.push(current);
                     return visited;
                 }
@@ -315,7 +379,6 @@
         function getHeuristic(problem,node1,node2){
             var count = (Math.abs(node1.x - node2.x) + Math.abs(node1.y - node2.y)) / 40;
             count--;
-
             var k = 1;
             var node;
             var start;
@@ -368,7 +431,6 @@
                         currentX = start.x - 40 * (i+1);
                         node = getNode(problem, currentX, start.y);
                     } else {
-
                         currentY = start.y + 40 * k;
                         node = getNode(problem, end.x, currentY);
                         k++;
@@ -385,7 +447,6 @@
                         currentY = start.y + 40 * (i+1);
                         node = getNode(problem, start.x, currentY);
                     }else{
-
                         currentX = start.x - 40 * k;
                         node = getNode(problem, currentX, end.y);
                         k++;
@@ -417,7 +478,7 @@
             }
         };
 
-        function dfs_search() {
+        function dfs_search(des) {
             var start = problem.start;
             var stack = new Stack();
             var visited = [];
@@ -425,7 +486,7 @@
             while (!stack.isEmpty()) {
                 var current = stack.pop();
                 visited.push(current);
-                if (isGoalState(current)) {
+                if (isGoalState(current,des)) {
                     visited.push(current);
                     return visited;
                 }
@@ -472,7 +533,6 @@
 
         };
 
-
          function routing(visited) {
             var tempVisited = visited;
             var des = visited[visited.length - 1];
@@ -499,15 +559,17 @@
                         break;
                 }
                 polyline.push({
-                   "x" : node.x+20,
+                    "x" : node.x+20,
                     "y" : node.y+20
                 });
                 if(node.action != null) {
                     path.push(node);
                 }
                 temp = node;
+                console.log(temp);
             }
              var rev = path.reverse();
+             console.log(path);
             changeColor(tempVisited,rev,polyline);
         };
         function getNextPath(visited,x,y){
@@ -565,21 +627,6 @@
             return false;
         };
         mic.onresult = function (intent, entities) {
-           /* var r = kv("intent", intent);
-
-            for (var k in entities) {
-                var e = entities[k];
-                console.log(entities);
-                if (!(e instanceof Array)) {
-                    r += kv(k, e.value);
-                } else {
-                    for (var i = 0; i < e.length; i++) {
-                        r += kv(k, e[i].value);
-                    }
-                }
-            }
-            console.log(r);
-            document.getElementById("result").innerHTML = r;*/
             console.log(entities);
             if(entities.alg.value == "bfs"){
                 var visited = bfs_search("des:"+entities.point.value.toUpperCase());
@@ -589,8 +636,6 @@
                 var visited = aStar_search(problem);
                 routing(visited);
             }
-
-
         };
     });
 
