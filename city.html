@@ -43,7 +43,6 @@
             </div>
         </md-input-container>
             </form>
-
             <md-button ng-click = "submit()" class = "md-raised md-primary">submit</md-button>
             <md-button ng-click = "reset()" class = "md-raised md-primary">reset</md-button>
             <hr>
@@ -174,9 +173,10 @@
             }else{
 
             }
-            console.log(visitedRoute);
+
             routing(visitedRoute);
         };
+
         $scope.reset = function(){
             console.log(visitedRouteClone);
             reset(visitedRouteClone);
@@ -252,12 +252,10 @@
                 }
             }
             problem.map = map;
-            console.log(problem);
             return problem;
         }
 
         function best_first_search(problem,des){
-            console.log(des);
             var frontier = new PriorityQueue();
             var start = problem.start;
             var visited = [start];
@@ -268,10 +266,9 @@
             while(!frontier.isEmpty()){
                 current = frontier.deQueue();
                 if(isGoalState(current,des)){
-                    console.log(visited);
+
                     for(var i = visited.length-1; i >=0; i--){
                         if(isGoalState(visited[i],des)){
-                            console.log(des);
                             break;
                         }else{
                             visited.splice(visited.length-1,1);
@@ -281,11 +278,10 @@
                 }
                 var destination;
                 for(var i = 0 ; i < problem.des.length; i++){
-                    if(problem.des[i].name = des){
+                    if(problem.des[i].name == des){
                         destination = problem.des[i];
                     }
                 }
-                console.log(destination);
                 nei = getNei(current,visited);
                 for(var i = 0; i < nei.length; i++){
                     priority = getHeuristic(problem,nei[i],destination).sort(function(a, b){return a-b})[0];
@@ -295,21 +291,7 @@
                 }
             }
         }
-       /* var visited = [];
-        var priority;
-        var nei = getNei(problem.start,visited);
-        console.log(nei);
-        for(var i = 0; i < nei.length; i++){
-            priority = getHeuristic(problem,nei[i],problem.des[0]).sort(function(a, b){return a-b})[0];
-            nei[i].total = priority;
-            visited.push(nei[i]);
-        }
-        console.log(visited);
-*/
-       // var visitedRoute = best_first_search(problem,problem.des[0]);
-      // console.log(visitedRoute);
-        //routing(visitedRoute);
-        //aStar(problem);
+
         function aStar_search(problem,des) {
 
             var start = problem.start;
@@ -634,6 +616,9 @@
                 routing(visited);
             }else if(entities.alg.value == "a_star"){
                 var visited = aStar_search(problem);
+                routing(visited);
+            }else if(entities.alg.value == "BestFS"){
+                var visited = best_first_search(problem,"des:"+entities.point.value.toUpperCase());
                 routing(visited);
             }
         };
